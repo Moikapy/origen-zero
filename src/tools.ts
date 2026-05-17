@@ -171,6 +171,15 @@ async function executeTool(
       return executeBinary(execution.executablePath, args);
     case "http":
       return executeHTTP(execution, args);
+    case "wasm": {
+      const { createZeroWASMTool } = await import("./wasm-tool.js");
+      const tool = createZeroWASMTool({
+        functionName: "main",
+        description: "Zero WASM tool",
+        wasmBytes: execution.wasmBytes,
+      });
+      return tool.execute(args, async () => null as any);
+    }
   }
 }
 

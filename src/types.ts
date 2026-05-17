@@ -120,12 +120,12 @@ export interface ZeroBuildResult {
 
 /** Options for `zero build`. */
 export interface ZeroBuildOptions {
-  /** Output path for compiled binary. */
+  /** Output path for compiled binary/wasm. */
   out?: string;
-  /** Target triple, e.g., "linux-musl-x64". */
+  /** Target triple, e.g., "linux-musl-x64" or "wasm32-web". */
   target?: string;
-  /** Emit format: "exe" (default) or "object". */
-  emit?: "exe" | "object";
+  /** Emit format: "exe" (default), "object", or "wasm". */
+  emit?: "exe" | "object" | "wasm";
 }
 
 // ── Tool Registration Types ─────────────────────────────────────────────
@@ -148,6 +148,7 @@ export interface ZeroToolConfig {
 export type ZeroToolExecution =
   | { mode: "subprocess"; executablePath: string }
   | { mode: "http"; endpoint: string; apiKey?: string; headers?: Record<string, string>; fetch?: typeof globalThis.fetch }
+  | { mode: "wasm"; wasmBytes: ArrayBuffer | WebAssembly.Module }
 
 /** Result of compileAndRegister on success. */
 export interface ZeroToolRegistrationSuccess {

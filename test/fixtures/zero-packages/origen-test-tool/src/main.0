@@ -1,0 +1,12 @@
+fun add(a: i32, b: i32) -> i32 {
+  return a + b
+}
+
+pub fun main(world: World) -> Void raises {
+  let result = add(40, 2)
+  if result == 42 {
+    check world.out.write("42\n")
+  } else {
+    check world.out.write("error\n")
+  }
+}

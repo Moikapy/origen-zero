@@ -26,6 +26,11 @@
       "types": "./dist/http-compiler.d.ts",
       "import": "./dist/http-compiler.js",
       "default": "./dist/http-compiler.js"
+    },
+    "./wasm-tool": {
+      "types": "./dist/wasm-tool.d.ts",
+      "import": "./dist/wasm-tool.js",
+      "default": "./dist/wasm-tool.js"
     }
   },
   "files": [

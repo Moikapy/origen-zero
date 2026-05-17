@@ -6,6 +6,7 @@ export default defineConfig({
     tools: "src/tools.ts",
     compiler: "src/compiler.ts",
     "http-compiler": "src/http-compiler.ts",
+    "wasm-tool": "src/wasm-tool.ts",
   },
   format: ["esm"],
   target: "es2022",

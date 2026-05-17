@@ -45,6 +45,9 @@ export { ZeroCompiler } from "./compiler.js";
 // HTTP Compiler
 export { ZeroHTTPCompiler } from "./http-compiler.js";
 
+// WASM Tool
+export { createZeroWASMTool, createZeroWASMTools } from "./wasm-tool.js";
+
 // Parsers (for advanced use)
 export {
   parseDiagnostic,

@@ -105,7 +105,7 @@ export class ZeroCompiler implements ZeroCompilerLike {
     options?: ZeroBuildOptions,
   ): Promise<ZeroBuildResult> {
     const filePath = await this.writeSource(source);
-    const args = ["build", "--emit", options?.emit ?? "exe"];
+    const args = ["build", "--json", "--emit", options?.emit ?? "exe"];
 
     if (options?.target) {
       args.push("--target", options.target);
