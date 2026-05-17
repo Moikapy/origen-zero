@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "ctx_batch_execute"
+    ],
+    "deny": [],
+    "ask": [],
+    "denyPaths": [],
+    "additionalDirectories": []
+  }
+}

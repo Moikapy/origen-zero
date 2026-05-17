@@ -33,7 +33,7 @@ describe("createZeroTool", () => {
     tool = createZeroTool({
       functionName: "add",
       description: "Add two numbers",
-      executablePath: "/bin/test-binary",
+      execution: { mode: "subprocess", executablePath: "/bin/test-binary" },
       verify: false,
     });
   });
@@ -51,7 +51,6 @@ describe("createZeroTool", () => {
   it("executes binary and returns stdout", async () => {
     mockExecFile.mockImplementation(
       (_cmd: string, _args: string[], _opts: object, cb: Function) => {
-        // Simulate stdin write and return result
         cb(null, "42", "");
         return {} as any;
       },
@@ -62,8 +61,6 @@ describe("createZeroTool", () => {
   });
 
   it("returns error on non-zero exit code", async () => {
-    // The real implementation throws ZeroExecutionError
-    // but OrigenTool.execute returns string, so we test the error case
     mockExecFile.mockImplementation(
       (_cmd: string, _args: string[], _opts: object, cb: Function) => {
         const err = new Error("exit code 1") as NodeJS.ErrnoException & { status?: number };
@@ -76,13 +73,58 @@ describe("createZeroTool", () => {
     // Should throw/reject for binary execution failures
     await expect(tool.execute({ a: 1, b: 2 })).rejects.toThrow();
   });
+
+  describe("HTTP mode", () => {
+    it("executes via HTTP and returns result", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve("42"),
+      });
+
+      const httpTool = createZeroTool({
+        functionName: "add",
+        description: "Add two numbers",
+        execution: {
+          mode: "http",
+          endpoint: "https://zero-service.example.com",
+          fetch: mockFetch,
+        },
+      });
+
+      const result = await httpTool.execute({ a: 1, b: 2 });
+      expect(result).toBe("42");
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("throws ZeroHTTPError on non-2xx response", async () => {
+      const { ZeroHTTPError } = await import("../src/errors.js");
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        text: () => Promise.resolve("Internal Server Error"),
+      });
+
+      const httpTool = createZeroTool({
+        functionName: "add",
+        description: "Add two numbers",
+        execution: {
+          mode: "http",
+          endpoint: "https://zero-service.example.com",
+          fetch: mockFetch,
+        },
+      });
+
+      await expect(httpTool.execute({ a: 1, b: 2 })).rejects.toThrow(ZeroHTTPError);
+    });
+  });
 });
 
 describe("createZeroToolsFromProgram", () => {
   it("discovers functions from graph and creates tools", async () => {
-    const tools = await createZeroToolsFromProgram("/bin/test-binary", {
-      verify: false,
-    });
+    const tools = await createZeroToolsFromProgram(
+      { mode: "subprocess", executablePath: "/bin/test-binary" },
+      { verify: false },
+    );
 
     expect(tools).toHaveLength(2);
     expect(tools[0]!.name).toBe("add");

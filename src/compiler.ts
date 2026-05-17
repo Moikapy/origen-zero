@@ -9,6 +9,7 @@ import { execFile } from "node:child_process";
 import { mkdir, writeFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import type {
+  ZeroCompilerLike,
   ZeroCompilerConfig,
   ZeroSourceFile,
   ZeroCheckResult,
@@ -41,7 +42,7 @@ const ZERO_EXIT_INTERNAL = 2;
 
 // ── ZeroCompiler ────────────────────────────────────────────────────────
 
-export class ZeroCompiler {
+export class ZeroCompiler implements ZeroCompilerLike {
   private readonly binaryPath: string;
   private readonly workingDir: string;
   private readonly timeout: number;

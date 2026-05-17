@@ -11,18 +11,25 @@
 
 import type { OrigenTool } from "@moikapy/origen";
 import { ZeroCompiler } from "./compiler.js";
-import type { ZeroCompilerConfig } from "./types.js";
+import type { ZeroCompilerLike, ZeroCompilerConfig } from "./types.js";
 
 const TEMP_DIR = ".zero-origen/tmp";
 
 /**
  * Create the set of interactive Zero compiler tools that let the LLM
  * write, check, and fix Zero programs during a conversation.
+ *
+ * Accepts either a ZeroCompilerLike instance (ZeroCompiler or ZeroHTTPCompiler)
+ * or a ZeroCompilerConfig for the local CLI compiler.
  */
 export function createZeroCompilerTools(
-  compiler?: ZeroCompilerConfig,
+  compiler?: ZeroCompilerLike | ZeroCompilerConfig,
 ): OrigenTool[] {
-  const zero = new ZeroCompiler(compiler);
+  const zero: ZeroCompilerLike = !compiler
+    ? new ZeroCompiler()
+    : "check" in compiler && typeof compiler.check === "function"
+      ? (compiler as ZeroCompilerLike)
+      : new ZeroCompiler(compiler as ZeroCompilerConfig);
 
   const checkTool: OrigenTool = {
     name: "zero_check",

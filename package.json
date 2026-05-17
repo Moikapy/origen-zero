@@ -21,6 +21,11 @@
       "types": "./dist/compiler.d.ts",
       "import": "./dist/compiler.js",
       "default": "./dist/compiler.js"
+    },
+    "./http-compiler": {
+      "types": "./dist/http-compiler.d.ts",
+      "import": "./dist/http-compiler.js",
+      "default": "./dist/http-compiler.js"
     }
   },
   "files": [

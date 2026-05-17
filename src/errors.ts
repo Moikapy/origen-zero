@@ -62,6 +62,21 @@ export class ZeroTimeoutError extends ZeroError {
   }
 }
 
+/** Thrown when a Zero HTTP compiler request fails. */
+export class ZeroHTTPError extends ZeroError {
+  constructor(
+    public readonly status: number,
+    public readonly url: string,
+    body: string,
+  ) {
+    super(
+      `Zero compiler service returned ${status} from ${url}: ${body}`,
+      "ZERO_HTTP_ERROR",
+    );
+    this.name = "ZeroHTTPError";
+  }
+}
+
 /** Thrown when a compiled Zero binary returns a non-zero exit code. */
 export class ZeroExecutionError extends ZeroError {
   constructor(

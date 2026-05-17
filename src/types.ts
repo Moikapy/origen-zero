@@ -4,9 +4,25 @@
  * All TypeScript interfaces and types for the ZeroLang → Origen bridge.
  */
 
+// ── Compiler Interface ───────────────────────────────────────────────────
+
+/**
+ * The compiler interface. Both CLI and HTTP implementations satisfy this.
+ * Use ZeroCompiler for Node/Bun (subprocess), ZeroHTTPCompiler for
+ * Cloudflare Workers (HTTP fetch to a Zero service).
+ */
+export interface ZeroCompilerLike {
+  check(source: string | ZeroSourceFile): Promise<ZeroCheckResult>;
+  graph(source: string | ZeroSourceFile): Promise<ZeroGraphResult>;
+  size(source: string | ZeroSourceFile): Promise<ZeroSizeResult>;
+  fix(source: string | ZeroSourceFile): Promise<ZeroFixResult>;
+  build(source: string | ZeroSourceFile, options?: ZeroBuildOptions): Promise<ZeroBuildResult>;
+  explain(diagnosticCode: string): Promise<string>;
+}
+
 // ── Compiler Configuration ──────────────────────────────────────────────
 
-/** Configuration for the ZeroCompiler class. */
+/** Configuration for the local ZeroCompiler (subprocess-based). */
 export interface ZeroCompilerConfig {
   /** Path to zero CLI binary. Default: "zero" (must be on PATH) */
   binaryPath?: string;
@@ -14,6 +30,20 @@ export interface ZeroCompilerConfig {
   workingDir?: string;
   /** Timeout for compiler invocations in ms. Default: 30000 */
   timeout?: number;
+}
+
+/** Configuration for ZeroHTTPCompiler (fetch-based, works in Workers). */
+export interface ZeroHTTPCompilerConfig {
+  /** Base URL of the Zero compiler service. Required. */
+  endpoint: string;
+  /** Authorization header value (e.g., "Bearer <token>"). Optional. */
+  apiKey?: string;
+  /** Custom headers to include in every request. Optional. */
+  headers?: Record<string, string>;
+  /** Timeout for HTTP requests in ms. Default: 30000 */
+  timeout?: number;
+  /** Custom fetch function. Defaults to globalThis.fetch. Useful for testing. */
+  fetch?: typeof globalThis.fetch;
 }
 
 /** A Zero source file: either a path on disk or inline content. */
@@ -106,13 +136,18 @@ export interface ZeroToolConfig {
   functionName: string;
   /** Human-readable description for the LLM. Required. */
   description: string;
-  /** Path to the compiled Zero executable. */
-  executablePath: string;
-  /** Zero CLI config for verification before registration. */
-  compiler?: ZeroCompilerConfig;
+  /** Execution mode for the compiled Zero program. */
+  execution: ZeroToolExecution;
+  /** Zero compiler for verification before registration. Optional. */
+  compiler?: ZeroCompilerLike;
   /** Whether to verify the tool compiles cleanly before registering. Default: true */
   verify?: boolean;
 }
+
+/** How a Zero tool executes. Exactly one mode must be set. */
+export type ZeroToolExecution =
+  | { mode: "subprocess"; executablePath: string }
+  | { mode: "http"; endpoint: string; apiKey?: string; headers?: Record<string, string>; fetch?: typeof globalThis.fetch }
 
 /** Result of compileAndRegister on success. */
 export interface ZeroToolRegistrationSuccess {

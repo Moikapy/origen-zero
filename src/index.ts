@@ -10,7 +10,9 @@
 
 // Types
 export type {
+  ZeroCompilerLike,
   ZeroCompilerConfig,
+  ZeroHTTPCompilerConfig,
   ZeroSourceFile,
   ZeroDiagnostic,
   ZeroCheckResult,
@@ -21,6 +23,7 @@ export type {
   ZeroBuildResult,
   ZeroBuildOptions,
   ZeroToolConfig,
+  ZeroToolExecution,
   ZeroToolRegistrationSuccess,
   ZeroToolRegistrationFailure,
 } from "./types.js";
@@ -33,10 +36,14 @@ export {
   ZeroBuildFailedError,
   ZeroTimeoutError,
   ZeroExecutionError,
+  ZeroHTTPError,
 } from "./errors.js";
 
 // Compiler
 export { ZeroCompiler } from "./compiler.js";
+
+// HTTP Compiler
+export { ZeroHTTPCompiler } from "./http-compiler.js";
 
 // Parsers (for advanced use)
 export {
