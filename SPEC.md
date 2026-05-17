@@ -43,7 +43,9 @@ A bridge package `@moikapy/origen-zero` that lets Origen agents:
 @moikapy/origen-zero
 ```
 
-**Runtime**: Node.js 20+, Bun, Cloudflare Workers (limited — Zero CLI requires subprocess spawn)
+**Runtime**: Node.js 20+, Bun, Cloudflare Workers (limited — Zero CLI requires subprocess spawn for native builds; WASM execution planned when `wasm32-web` build support ships)
+
+**Zero v0.1.1 note**: The `wasm32-web` target is declared and `check` validates capability restrictions for it, but `build --target wasm32-web` produces CGEN004 because the WASM codegen backend hasn't shipped yet. Native builds (`linux-musl-x64`, `darwin-arm64`, etc.) work. See `docs/superpowers/plans/2026-05-16-wasm-execution-mode.md` for the WASM execution plan.
 
 **Peer dependencies**:
 - `@moikapy/origen` ^0.6.0
