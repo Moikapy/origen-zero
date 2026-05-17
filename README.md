@@ -77,7 +77,7 @@ import { ZeroCompiler } from "@moikapy/origen-zero/compiler";
 const compiler = new ZeroCompiler({ binaryPath: "zero", timeout: 10000 });
 
 // Check for errors
-const result = await compiler.check("fun add(a: i32, b: i32) -> i32 => a + b");
+const result = await compiler.check("fun main() {}" /* ... */);
 if (result.ok) { /* clean */ }
 
 // Get dependency graph
@@ -85,6 +85,9 @@ const graph = await compiler.graph("./src/math.0");
 
 // Get size estimates
 const sizes = await compiler.size("./src/math.0");
+
+// Build WASM for Workers
+const build = await compiler.build("./src/math.0", { emit: "wasm", target: "wasm32-web", out: "./dist/math" });
 ```
 
 ## API
@@ -126,6 +129,40 @@ const sizes = await compiler.size("./src/math.0");
 | `ZeroBuildFailedError` | Build produces no output |
 | `ZeroTimeoutError` | CLI invocation exceeds timeout |
 | `ZeroExecutionError` | Compiled binary exits non-zero |
+
+### WASM Execution (Workers-ready)
+
+```typescript
+import { createZeroWASMTool } from "@moikapy/origen-zero/wasm-tool";
+import { readFileSync } from "node:fs";
+
+// Load pre-compiled WASM module
+const wasmBytes = readFileSync("./dist/my-tool.wasm");
+
+// In Workers — WASM runs in-process, no subprocess or HTTP needed
+const tool = createZeroWASMTool({
+  functionName: "main",
+  description: "My Zero tool",
+  wasmBytes,
+});
+
+// Execute: Zero program writes to stdout, tool captures the output
+const result = await tool.execute({ input: "hello" });
+```
+
+Build the WASM module from Zero source:
+
+```bash
+zero build --emit wasm --target wasm32-web src/my-tool.0 --out dist/my-tool
+```
+
+## Execution Modes
+
+| Mode | Transport | Works In | When |
+|---|---|---|---|
+| `subprocess` | execFile() | Node.js, Bun | Native binaries |
+| `http` | fetch() | Workers, Node, browser | Remote Zero service |
+| `wasm` | WebAssembly.instantiate() | Workers, Node, browser | Pre-compiled .wasm |
 
 ## License
 
