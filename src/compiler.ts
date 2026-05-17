@@ -35,7 +35,9 @@ import {
 
 const DEFAULT_BINARY = "zero";
 const DEFAULT_TIMEOUT = 30_000;
-const TEMP_DIR = ".zero-origen/tmp";
+
+/** Temp directory for Zero compilation artifacts. Shared across modules. */
+export const TEMP_DIR = ".zero-origen/tmp";
 const ZERO_EXIT_OK = 0;
 const ZERO_EXIT_ERRORS = 1;
 const ZERO_EXIT_INTERNAL = 2;

@@ -35,18 +35,24 @@ export interface ZeroWASMToolConfig {
 }
 
 // ── Module cache ──────────────────────────────────────────────────────────
+// Per-tool module cache. Each tool config can hold its own compiled module,
+// avoiding global cache thrashing when multiple WASM tools are active.
+// The config.module field is populated on first compile and reused thereafter.
 
-let cachedModule: WebAssembly.Module | null = null;
-let cachedModuleSource: ArrayBuffer | null = null;
+const moduleCache = new WeakMap<ArrayBuffer, WebAssembly.Module>();
 
 async function getModule(
   wasmBytes: ArrayBuffer | WebAssembly.Module,
+  precompiled?: WebAssembly.Module,
 ): Promise<WebAssembly.Module> {
   if (wasmBytes instanceof WebAssembly.Module) return wasmBytes;
-  if (cachedModule && cachedModuleSource === wasmBytes) return cachedModule;
-  cachedModule = await WebAssembly.compile(wasmBytes);
-  cachedModuleSource = wasmBytes;
-  return cachedModule;
+  if (precompiled) return precompiled;
+  // Check per-bytes cache (same ArrayBuffer reference = same module)
+  const cached = moduleCache.get(wasmBytes);
+  if (cached) return cached;
+  const compiled = await WebAssembly.compile(wasmBytes);
+  moduleCache.set(wasmBytes, compiled);
+  return compiled;
 }
 
 // ── createZeroWASMTool ───────────────────────────────────────────────────
@@ -70,7 +76,7 @@ export function createZeroWASMTool(config: ZeroWASMToolConfig): OrigenTool {
       required: [],
     },
     async execute(args: Record<string, unknown>, _getD1: any): Promise<string> {
-      const module = await getModule(config.wasmBytes);
+      const module = await getModule(config.wasmBytes, config.module);
 
       // Pass args as WASI command-line args (JSON-serialized)
       const wasiArgs = ["zero", JSON.stringify(args)];
@@ -83,6 +89,11 @@ export function createZeroWASMTool(config: ZeroWASMToolConfig): OrigenTool {
       runtime.setInstance(instance);
 
       // Execute the Zero program
+      // Cache the compiled module for subsequent invocations
+      if (!config.module && config.wasmBytes instanceof ArrayBuffer) {
+        (config as ZeroWASMToolConfig).module = module;
+      }
+
       const exitCode = (instance.exports.main as () => number)();
 
       if (exitCode !== 0) {

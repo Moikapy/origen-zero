@@ -10,7 +10,7 @@
  */
 
 import type { OrigenTool } from "@moikapy/origen";
-import { ZeroCompiler } from "./compiler.js";
+import { ZeroCompiler, TEMP_DIR } from "./compiler.js";
 import type {
   ZeroCompilerLike,
   ZeroToolConfig,
@@ -23,7 +23,6 @@ import type {
 } from "./types.js";
 import { ZeroExecutionError, ZeroHTTPError } from "./errors.js";
 
-const TEMP_DIR = ".zero-origen/tmp";
 const DEFAULT_VERIFY = true;
 
 // ── createZeroTool ───────────────────────────────────────────────────────

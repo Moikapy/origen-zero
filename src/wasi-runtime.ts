@@ -8,7 +8,26 @@
  *
  * Zero programs that use World (stdout/stderr), std.args, std.env,
  * or std.fs (Fs resource) all route through these WASI imports.
+ *
+ * Uses only Uint8Array/TextEncoder/TextDecoder — no Node.js Buffer.
+ * Works in Cloudflare Workers, browsers, and Node.js.
  */
+
+// ── Portable byte utilities (Workers-compatible, no Buffer) ────────────
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+function concatUint8(arrays: Uint8Array[]): Uint8Array {
+  const total = arrays.reduce((sum, a) => sum + a.length, 0);
+  const result = new Uint8Array(total);
+  let offset = 0;
+  for (const a of arrays) {
+    result.set(a, offset);
+    offset += a.length;
+  }
+  return result;
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -17,8 +36,8 @@ export interface ZeroWASIRuntimeConfig {
   args?: string[];
   /** Environment variables (default: []). Format: "KEY=VALUE". */
   env?: string[];
-  /** Pre-populated files: Map<path, Buffer>. */
-  files?: Map<string, Buffer>;
+  /** Pre-populated files: Map<path, Uint8Array>. */
+  files?: Map<string, Uint8Array>;
   /** Pre-populated directories. */
   dirs?: Set<string>;
 }
@@ -31,7 +50,7 @@ export interface ZeroWASIRuntime {
   /** Get all captured stderr output. */
   getStderr(): string;
   /** Get the virtual filesystem state. */
-  getFiles(): Map<string, Buffer>;
+  getFiles(): Map<string, Uint8Array>;
   /** Get the virtual directory set. */
   getDirs(): Set<string>;
   /** Set the instance reference (called after instantiation). */
@@ -43,7 +62,7 @@ export interface ZeroWASIRuntime {
 export function createZeroWASIRuntime(config?: ZeroWASIRuntimeConfig): ZeroWASIRuntime {
   const args = config?.args ?? ["zero"];
   const env = config?.env ?? [];
-  const files = config?.files ?? new Map<string, Buffer>();
+  const files = config?.files ?? new Map<string, Uint8Array>();
   const dirs = config?.dirs ?? new Set(["."]);
 
   let instance: WebAssembly.Instance;
@@ -77,17 +96,17 @@ export function createZeroWASIRuntime(config?: ZeroWASIRuntimeConfig): ZeroWASIR
   }
 
   function readString(ptr: number, len: number): string {
-    return Buffer.from(mem().buffer, ptr, len).toString("utf8");
+    return decoder.decode(mem().subarray(ptr, ptr + len));
   }
 
   function byteLength(items: string[]): number {
-    return items.reduce((total, item) => total + Buffer.byteLength(item) + 1, 0);
+    return items.reduce((total, item) => total + encoder.encode(item).length + 1, 0);
   }
 
   function writeStrings(ptrArray: number, ptrBytes: number, items: string[]): void {
     let offset = ptrBytes;
     for (let i = 0; i < items.length; i++) {
-      const bytes = Buffer.from(items[i]!);
+      const bytes = encoder.encode(items[i]!);
       writeI32(ptrArray + i * 4, offset);
       mem().set(bytes, offset);
       mem()[offset + bytes.length] = 0; // null terminator
@@ -95,13 +114,13 @@ export function createZeroWASIRuntime(config?: ZeroWASIRuntimeConfig): ZeroWASIR
     }
   }
 
-  function writeFileAt(entry: { path: string; pos: number }, chunks: Buffer[]): void {
-    const incoming = Buffer.concat(chunks);
-    const current = files.get(entry.path) || Buffer.alloc(0);
+  function writeFileAt(entry: { path: string; pos: number }, chunks: Uint8Array[]): void {
+    const incoming = concatUint8(chunks);
+    const current = files.get(entry.path) || new Uint8Array(0);
     const end = entry.pos + incoming.length;
-    const next = Buffer.alloc(Math.max(current.length, end));
-    current.copy(next, 0, 0, current.length);
-    incoming.copy(next, entry.pos);
+    const next = new Uint8Array(Math.max(current.length, end));
+    next.set(current, 0);
+    next.set(incoming, entry.pos);
     files.set(entry.path, next);
     entry.pos = end;
   }
@@ -149,7 +168,7 @@ export function createZeroWASIRuntime(config?: ZeroWASIRuntimeConfig): ZeroWASIR
           return 0;
         }
 
-        if (write) files.set(path, Buffer.alloc(0));
+        if (write) files.set(path, new Uint8Array(0));
         if (!files.has(path)) return 44; // ENOENT
         const opened = nextFd++;
         fds.set(opened, { type: "file", path, pos: 0 });
@@ -160,7 +179,7 @@ export function createZeroWASIRuntime(config?: ZeroWASIRuntimeConfig): ZeroWASIR
       fd_read(fd: number, iovs: number, iovsLen: number, nread: number): number {
         const entry = fds.get(fd);
         if (!entry || entry.type !== "file") return 8; // EBADF
-        const source = files.get(entry.path) || Buffer.alloc(0);
+        const source = files.get(entry.path) || new Uint8Array(0);
         let total = 0;
         for (let i = 0; i < iovsLen; i++) {
           const ptr = readI32(iovs + i * 8);
@@ -176,17 +195,17 @@ export function createZeroWASIRuntime(config?: ZeroWASIRuntimeConfig): ZeroWASIR
 
       fd_write(fd: number, iovs: number, iovsLen: number, nwritten: number): number {
         let total = 0;
-        const chunks: Buffer[] = [];
+        const chunks: Uint8Array[] = [];
         for (let i = 0; i < iovsLen; i++) {
           const ptr = readI32(iovs + i * 8);
           const len = readI32(iovs + i * 8 + 4);
-          chunks.push(Buffer.from(mem().buffer, ptr, len));
+          chunks.push(mem().slice(ptr, ptr + len));
           total += len;
         }
         if (fd === 1) {
-          stdout += Buffer.concat(chunks).toString("utf8");
+          stdout += decoder.decode(concatUint8(chunks));
         } else if (fd === 2) {
-          stderr += Buffer.concat(chunks).toString("utf8");
+          stderr += decoder.decode(concatUint8(chunks));
         } else {
           const entry = fds.get(fd);
           if (!entry || entry.type !== "file") return 8; // EBADF
@@ -204,7 +223,7 @@ export function createZeroWASIRuntime(config?: ZeroWASIRuntimeConfig): ZeroWASIR
       fd_filestat_get(fd: number, buf: number): number {
         const entry = fds.get(fd);
         if (!entry || entry.type !== "file") return 8; // EBADF
-        writeU64(buf + 32, (files.get(entry.path) || Buffer.alloc(0)).length);
+        writeU64(buf + 32, (files.get(entry.path) || new Uint8Array(0)).length);
         return 0;
       },
 

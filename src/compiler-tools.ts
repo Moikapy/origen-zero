@@ -10,10 +10,8 @@
  */
 
 import type { OrigenTool } from "@moikapy/origen";
-import { ZeroCompiler } from "./compiler.js";
+import { ZeroCompiler, TEMP_DIR } from "./compiler.js";
 import type { ZeroCompilerLike, ZeroCompilerConfig } from "./types.js";
-
-const TEMP_DIR = ".zero-origen/tmp";
 
 /**
  * Create the set of interactive Zero compiler tools that let the LLM
