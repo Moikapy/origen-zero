@@ -103,9 +103,33 @@ export function parseCheckOutput(raw: string): ZeroCheckResult {
 /** Parse `zero graph --json` output into a typed ZeroGraphResult. */
 export function parseGraphOutput(raw: string): ZeroGraphResult {
   const json = JSON.parse(raw);
+  const diagnostics = json.diagnostics ?? [];
+  const hasErrors = diagnostics.some((d: any) => d.severity === "error");
   return {
-    ok: json.ok ?? false,
-    graph: json.graph ?? {},
+    ok: !hasErrors,
+    symbols: (json.symbols ?? []).map((s: Record<string, unknown>) => ({
+      name: String(s.name ?? ""),
+      module: String(s.module ?? ""),
+      kind: String(s.kind ?? ""),
+      public: Boolean(s.public),
+      effects: Array.isArray(s.effects) ? s.effects.map(String) : [],
+    })),
+    functions: (json.functions ?? []).map((f: Record<string, unknown>) => ({
+      name: String(f.name ?? ""),
+      kind: String(f.kind ?? ""),
+      public: Boolean(f.public),
+      params: Number(f.params ?? 0),
+      returnType: String(f.returnType ?? ""),
+      raises: Boolean(f.raises),
+      effects: Array.isArray(f.effects) ? f.effects.map(String) : [],
+      allocationBehavior: String(f.allocationBehavior ?? ""),
+      targetSupport: (() => {
+        const ts = f.targetSupport as Record<string, unknown> | undefined;
+        return ts
+          ? { status: String(ts.status ?? ""), missingCapabilities: Array.isArray(ts.missingCapabilities) ? ts.missingCapabilities.map(String) : [] }
+          : { status: "unknown", missingCapabilities: [] };
+      })(),
+    })),
     raw: json,
   };
 }
@@ -113,9 +137,27 @@ export function parseGraphOutput(raw: string): ZeroGraphResult {
 /** Parse `zero size --json` output into a typed ZeroSizeResult. */
 export function parseSizeOutput(raw: string): ZeroSizeResult {
   const json = JSON.parse(raw);
+  const diagnostics = json.diagnostics ?? [];
+  const hasErrors = diagnostics.some((d: any) => d.severity === "error");
+  const pr = json.portableRuntime;
   return {
-    ok: json.ok ?? false,
-    sizes: json.sizes ?? {},
+    ok: !hasErrors,
+    portableRuntime: pr
+      ? {
+          target: String(pr.target ?? ""),
+          runtimeKind: String(pr.runtimeKind ?? ""),
+          portable: Boolean(pr.portable),
+          imports: {
+            functionCount: Number(pr.imports?.functionCount ?? 0),
+            functions: Array.isArray(pr.imports?.functions) ? pr.imports.functions.map(String) : [],
+            module: pr.imports?.module ?? null,
+          },
+          memoryFloor: pr.memoryFloor
+            ? { floorBytes: Number(pr.memoryFloor.floorBytes ?? 0), minimumPages: Number(pr.memoryFloor.minimumPages ?? 0) }
+            : undefined,
+          capabilityRestrictions: pr.capabilityRestrictions ?? undefined,
+        }
+      : undefined,
     raw: json,
   };
 }

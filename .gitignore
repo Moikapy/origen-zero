@@ -1,4 +1,5 @@
 node_modules/
 dist/
 .zero-origen/
-*.tgz
+*.tgz.zero/
+test/fixtures/.zero-out/

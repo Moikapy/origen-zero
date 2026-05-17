@@ -82,17 +82,50 @@ export interface ZeroCheckResult {
 /** Result of `zero graph --json`. */
 export interface ZeroGraphResult {
   ok: boolean;
-  /** Dependency graph as adjacency list */
-  graph: Record<string, string[]>;
+  /** Parsed symbol list from the graph output. */
+  symbols: ZeroGraphSymbol[];
+  /** Parsed function list from the graph output. */
+  functions: ZeroGraphFunction[];
+  /** Raw JSON output from zero graph. */
   raw: Record<string, unknown>;
+}
+
+export interface ZeroGraphSymbol {
+  name: string;
+  module: string;
+  kind: string;
+  public: boolean;
+  effects: string[];
+}
+
+export interface ZeroGraphFunction {
+  name: string;
+  kind: string;
+  public: boolean;
+  params: number;
+  returnType: string;
+  raises: boolean;
+  effects: string[];
+  allocationBehavior: string;
+  targetSupport: { status: string; missingCapabilities: string[] };
 }
 
 /** Result of `zero size --json`. */
 export interface ZeroSizeResult {
   ok: boolean;
-  /** Size report — function sizes, total binary size estimate */
-  sizes: Record<string, number>;
+  /** Structured size/runtime analysis from the real CLI. */
+  portableRuntime?: ZeroPortableRuntime;
+  /** Raw JSON output from zero size. */
   raw: Record<string, unknown>;
+}
+
+export interface ZeroPortableRuntime {
+  target: string;
+  runtimeKind: string;
+  portable: boolean;
+  imports: { functionCount: number; functions: string[]; module: string | null };
+  memoryFloor?: { floorBytes: number; minimumPages: number };
+  capabilityRestrictions?: { filesystem?: string };
 }
 
 /** Result of `zero fix --plan --json`. */

@@ -72,7 +72,7 @@ export async function createZeroToolsFromProgram(
       : { path: "program.0" }; // HTTP mode — path is a hint
 
   const graphResult = await compiler.graph(source);
-  const functionNames = Object.keys(graphResult.graph);
+  const functionNames = graphResult.functions.map(f => f.name);
 
   return functionNames.map((fn) =>
     createZeroTool({
@@ -147,10 +147,10 @@ export async function compileAndRegister(
   const graphResult = await compiler.graph(source);
 
   // Step 4: Register each function
-  const tools: OrigenTool[] = Object.keys(graphResult.graph).map((fn) =>
+  const tools: OrigenTool[] = graphResult.functions.map((f) =>
     createZeroTool({
-      functionName: fn,
-      description: `Zero function: ${fn}`,
+      functionName: f.name,
+      description: `Zero function: ${f.name}`,
       execution,
       compiler,
     }),

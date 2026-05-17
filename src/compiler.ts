@@ -119,11 +119,11 @@ export class ZeroCompiler implements ZeroCompilerLike {
 
     try {
       const stdout = await this.exec(args);
-      // Build produces a binary path in its JSON output
+      // Build produces structured JSON output
       const json = JSON.parse(stdout);
       return {
         ok: true,
-        outputPath: json.output ?? options?.out,
+        outputPath: json.artifactPath ?? options?.out,
         diagnostics: [],
       };
     } catch (err) {
@@ -148,22 +148,31 @@ export class ZeroCompiler implements ZeroCompilerLike {
 
   /** Resolve source to a file path. If inline content, write to temp dir. */
   private async writeSource(source: string | ZeroSourceFile): Promise<string> {
-    if (typeof source === "string") {
-      // It's inline source — write to temp file
-      const tmpPath = join(this.workingDir, TEMP_DIR, `check-${Date.now()}.0`);
-      await mkdir(join(this.workingDir, TEMP_DIR), { recursive: true });
-      await writeFile(tmpPath, source, "utf-8");
-      return tmpPath;
+    // If it's a ZeroSourceFile with explicit content, write to temp
+    if (typeof source !== "string") {
+      if (source.content !== undefined) {
+        const tmpPath = join(this.workingDir, TEMP_DIR, source.path);
+        await mkdir(join(this.workingDir, TEMP_DIR), { recursive: true });
+        await writeFile(tmpPath, source.content, "utf-8");
+        return tmpPath;
+      }
+      // Content is undefined — read from disk at source.path
+      return source.path;
     }
-    // It's a ZeroSourceFile
-    if (source.content !== undefined) {
-      const tmpPath = join(this.workingDir, TEMP_DIR, source.path);
-      await mkdir(join(this.workingDir, TEMP_DIR), { recursive: true });
-      await writeFile(tmpPath, source.content, "utf-8");
-      return tmpPath;
+
+    // String: check if it's a file path that exists on disk
+    try {
+      const stat = await import("node:fs/promises").then((fs) => fs.stat(source));
+      if (stat.isFile()) return source; // It's a real file path
+    } catch {
+      // Not a file — treat as inline source
     }
-    // Content is undefined — read from disk at source.path
-    return source.path;
+
+    // Inline source — write to temp file
+    const tmpPath = join(this.workingDir, TEMP_DIR, `check-${Date.now()}.0`);
+    await mkdir(join(this.workingDir, TEMP_DIR), { recursive: true });
+    await writeFile(tmpPath, source, "utf-8");
+    return tmpPath;
   }
 
   /** Clean up temp files (best effort — ignore errors). */
@@ -205,13 +214,15 @@ export class ZeroCompiler implements ZeroCompilerLike {
               reject(new ZeroCompilerNotFoundError(this.binaryPath));
               return;
             }
-            // Exit code 1 means errors in the source — return the structured output
-            if ((error as NodeJS.ErrnoException & { status?: number }).status === ZERO_EXIT_ERRORS && stdout) {
+            // Exit code 1 means errors in the source – check both code (Node 25+) and status (older)
+            const exitCode = (error as NodeJS.ErrnoException & { code?: number; status?: number }).code
+              ?? (error as NodeJS.ErrnoException & { status?: number }).status;
+            if (exitCode === ZERO_EXIT_ERRORS && stdout) {
               resolve(stdout);
               return;
             }
             // Exit code 2 means internal error
-            if ((error as NodeJS.ErrnoException & { status?: number }).status === ZERO_EXIT_INTERNAL) {
+            if (exitCode === ZERO_EXIT_INTERNAL) {
               reject(
                 new ZeroBuildFailedError([
                   {

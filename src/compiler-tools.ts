@@ -90,7 +90,7 @@ export function createZeroCompilerTools(
       const source = String(args.source ?? "");
       const path = args.path ? String(args.path) : undefined;
       const result = await zero.graph(path ? { path, content: source } : source);
-      return JSON.stringify(result.graph, null, 2);
+      return JSON.stringify({ symbols: result.symbols, functions: result.functions }, null, 2);
     },
   };
 
@@ -115,7 +115,7 @@ export function createZeroCompilerTools(
       const source = String(args.source ?? "");
       const path = args.path ? String(args.path) : undefined;
       const result = await zero.size(path ? { path, content: source } : source);
-      return JSON.stringify(result.sizes, null, 2);
+      return JSON.stringify(result.portableRuntime ?? result.raw, null, 2);
     },
   };
 

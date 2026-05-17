@@ -91,12 +91,19 @@ describe("ZeroCompiler", () => {
   describe("graph", () => {
     it("returns dependency graph", async () => {
       mockSuccess(JSON.stringify({
-        ok: true,
-        graph: { main: ["add", "multiply"], add: [], multiply: [] },
+        schemaVersion: 1,
+        symbols: [
+          { name: "main", module: "multi", kind: "function", public: true, effects: [] },
+          { name: "add", module: "multi", kind: "function", public: true, effects: [] },
+        ],
+        functions: [
+          { name: "add", kind: "function", public: true, params: 2, returnType: "i32", raises: false, effects: [], allocationBehavior: "no heap allocation", targetSupport: { status: "supported", missingCapabilities: [] } },
+          { name: "main", kind: "function", public: true, params: 1, returnType: "Void", raises: true, effects: ["io"], allocationBehavior: "no heap allocation", targetSupport: { status: "supported", missingCapabilities: [] } },
+        ],
       }));
       const result = await compiler.graph({ path: "multi.0", content: "pub fun main() {}" });
       expect(result.ok).toBe(true);
-      expect(result.graph.main).toEqual(["add", "multiply"]);
+      expect(result.functions.map((f: any) => f.name)).toContain("main");
     });
   });
 
@@ -105,12 +112,18 @@ describe("ZeroCompiler", () => {
   describe("size", () => {
     it("returns size estimates", async () => {
       mockSuccess(JSON.stringify({
-        ok: true,
-        sizes: { main: 512, add: 128, multiply: 256, total: 896 },
+        schemaVersion: 1,
+        portableRuntime: {
+          target: "linux-x64",
+          runtimeKind: "native",
+          portable: false,
+          imports: { functionCount: 0, functions: [], module: null },
+          memoryFloor: { floorBytes: 65536, minimumPages: 1 },
+        },
       }));
       const result = await compiler.size({ path: "multi.0", content: "pub fun main() {}" });
       expect(result.ok).toBe(true);
-      expect(result.sizes.main).toBe(512);
+      expect(result.portableRuntime?.target).toBe("linux-x64");
     });
   });
 

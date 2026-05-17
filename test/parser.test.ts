@@ -79,35 +79,42 @@ describe("parseCheckOutput", () => {
 describe("parseGraphOutput", () => {
   it("parses a dependency graph", () => {
     const raw = JSON.stringify({
-      ok: true,
-      graph: {
-        main: ["out"],
-        add: [],
-        multiply: [],
-      },
+      schemaVersion: 1,
+      symbols: [
+        { name: "main", module: "multi", kind: "function", public: true, effects: [] },
+        { name: "add", module: "multi", kind: "function", public: true, effects: [] },
+      ],
+      functions: [
+        { name: "add", kind: "function", public: true, params: 2, returnType: "i32", raises: false, effects: [], allocationBehavior: "no heap allocation", targetSupport: { status: "supported", missingCapabilities: [] } },
+        { name: "main", kind: "function", public: true, params: 1, returnType: "Void", raises: true, effects: ["io"], allocationBehavior: "no heap allocation", targetSupport: { status: "supported", missingCapabilities: [] } },
+      ],
     });
     const result = parseGraphOutput(raw);
     expect(result.ok).toBe(true);
-    expect(result.graph.main).toEqual(["out"]);
-    expect(result.graph.add).toEqual([]);
+    expect(result.symbols).toHaveLength(2);
+    expect(result.functions).toHaveLength(2);
+    expect(result.functions[0]!.name).toBe("add");
   });
 });
 
 describe("parseSizeOutput", () => {
   it("parses size estimates", () => {
     const raw = JSON.stringify({
-      ok: true,
-      sizes: {
-        main: 512,
-        add: 128,
-        multiply: 256,
-        total: 896,
+      schemaVersion: 1,
+      portableRuntime: {
+        target: "linux-x64",
+        runtimeKind: "native",
+        portable: false,
+        imports: { functionCount: 0, functions: [], module: null },
+        memoryFloor: { floorBytes: 65536, minimumPages: 1 },
+        capabilityRestrictions: { filesystem: "allowed" },
       },
     });
     const result = parseSizeOutput(raw);
     expect(result.ok).toBe(true);
-    expect(result.sizes.main).toBe(512);
-    expect(result.sizes.total).toBe(896);
+    expect(result.portableRuntime?.target).toBe("linux-x64");
+    expect(result.portableRuntime?.runtimeKind).toBe("native");
+    expect(result.portableRuntime?.memoryFloor?.minimumPages).toBe(1);
   });
 });
 

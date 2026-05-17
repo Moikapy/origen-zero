@@ -13,7 +13,14 @@ vi.mock("../src/compiler.js", () => ({
     check: vi.fn().mockResolvedValue({ ok: true, diagnostics: [] }),
     graph: vi.fn().mockResolvedValue({
       ok: true,
-      graph: { add: [], multiply: [] },
+      symbols: [
+        { name: "add", module: "test", kind: "function", public: true, effects: [] },
+        { name: "multiply", module: "test", kind: "function", public: true, effects: [] },
+      ],
+      functions: [
+        { name: "add", kind: "function", public: true, params: 2, returnType: "i32", raises: false, effects: [], allocationBehavior: "no heap allocation", targetSupport: { status: "supported", missingCapabilities: [] } },
+        { name: "multiply", kind: "function", public: true, params: 2, returnType: "i32", raises: false, effects: [], allocationBehavior: "no heap allocation", targetSupport: { status: "supported", missingCapabilities: [] } },
+      ],
     }),
     build: vi.fn().mockResolvedValue({
       ok: true,
