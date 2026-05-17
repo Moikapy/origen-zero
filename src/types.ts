@@ -137,10 +137,16 @@ export interface ZeroFixResult {
 
 /** A single repair suggestion from `zero fix --plan --json`. */
 export interface ZeroFixSuggestion {
-  code: string;
-  line: number;
-  message: string;
-  suggestion?: string;
+  /** Fix identifier, e.g. "repair-syntax". */
+  id: string;
+  /** Associated diagnostic code, e.g. "PAR100". */
+  diagnosticCode: string;
+  /** Safety level: "safe" | "requires-human-review". */
+  safety: string;
+  /** Human-readable summary of the fix. */
+  summary: string;
+  /** Whether the fix can be applied automatically. */
+  appliesEdits: boolean;
 }
 
 /** Result of `zero build`. */
@@ -171,6 +177,10 @@ export interface ZeroToolConfig {
   description: string;
   /** Execution mode for the compiled Zero program. */
   execution: ZeroToolExecution;
+  /** Custom parameter schema for the OrigenTool. */
+  parameters?: Record<string, unknown>;
+  /** Origen-compatible Zod inputSchema. */
+  inputSchema?: unknown;
   /** Zero compiler for verification before registration. Optional. */
   compiler?: ZeroCompilerLike;
   /** Whether to verify the tool compiles cleanly before registering. Default: true */

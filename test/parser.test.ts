@@ -124,17 +124,18 @@ describe("parseFixOutput", () => {
       ok: true,
       fixes: [
         {
-          code: "TYP001",
-          line: 5,
-          message: "Add type annotation",
-          suggestion: "Change `x` to `x: i32`",
+          id: "repair-type",
+          diagnosticCode: "TYP001",
+          safety: "safe",
+          summary: "Add type annotation",
+          appliesEdits: true,
         },
       ],
     });
     const result = parseFixOutput(raw);
     expect(result.ok).toBe(true);
     expect(result.fixes).toHaveLength(1);
-    expect(result.fixes[0]!.code).toBe("TYP001");
-    expect(result.fixes[0]!.suggestion).toBe("Change `x` to `x: i32`");
+    expect(result.fixes[0]!.id).toBe("repair-type");
+    expect(result.fixes[0]!.diagnosticCode).toBe("TYP001");
   });
 });

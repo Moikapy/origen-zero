@@ -90,7 +90,7 @@ describe("ZeroHTTPCompiler", () => {
       ok: true,
       text: () => Promise.resolve(JSON.stringify({
         ok: true,
-        fixes: [{ code: "TYP001", line: 5, message: "Add type annotation" }],
+        fixes: [{ id: "repair-type", diagnosticCode: "TYP001", safety: "requires-human-review", summary: "Add type annotation", appliesEdits: false }],
       })),
     });
 
@@ -99,7 +99,7 @@ describe("ZeroHTTPCompiler", () => {
 
     expect(result.ok).toBe(true);
     expect(result.fixes).toHaveLength(1);
-    expect(result.fixes[0]!.code).toBe("TYP001");
+    expect(result.fixes[0]!.diagnosticCode).toBe("TYP001");
   });
 
   it("calls POST /build and returns parsed result", async () => {

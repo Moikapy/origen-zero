@@ -31,6 +31,11 @@
       "types": "./dist/wasm-tool.d.ts",
       "import": "./dist/wasm-tool.js",
       "default": "./dist/wasm-tool.js"
+    },
+    "./wasi-runtime": {
+      "types": "./dist/wasi-runtime.d.ts",
+      "import": "./dist/wasi-runtime.js",
+      "default": "./dist/wasi-runtime.js"
     }
   },
   "files": [

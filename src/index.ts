@@ -48,6 +48,10 @@ export { ZeroHTTPCompiler } from "./http-compiler.js";
 // WASM Tool
 export { createZeroWASMTool, createZeroWASMTools } from "./wasm-tool.js";
 
+// WASI Runtime
+export { createZeroWASIRuntime } from "./wasi-runtime.js";
+export type { ZeroWASIRuntime, ZeroWASIRuntimeConfig } from "./wasi-runtime.js";
+
 // Parsers (for advanced use)
 export {
   parseDiagnostic,

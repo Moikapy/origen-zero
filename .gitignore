@@ -1,5 +1,10 @@
 node_modules/
 dist/
 .zero-origen/
-*.tgz.zero/
+.zero/
+*.tgz
 test/fixtures/.zero-out/
+test/fixtures/std-args.wasm
+test/fixtures/std-env.wasm
+test/fixtures/add.wasm
+test/fixtures/hello.wasm

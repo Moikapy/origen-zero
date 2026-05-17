@@ -146,8 +146,8 @@ export function createZeroCompilerTools(
       }
 
       const lines = result.fixes.map((f) => {
-        let line = `[${f.code}] Line ${f.line}: ${f.message}`;
-        if (f.suggestion) line += `\n  Suggestion: ${f.suggestion}`;
+        let line = `[${f.diagnosticCode}] ${f.summary} (${f.safety})`;
+        if (f.appliesEdits) line += ` [auto-fixable]`;
         return line;
       });
 

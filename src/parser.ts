@@ -55,10 +55,11 @@ export const ZeroSizeResultSchema = z.object({
 });
 
 export const ZeroFixSuggestionSchema = z.object({
-  code: z.string(),
-  line: z.number().int().positive(),
-  message: z.string(),
-  suggestion: z.string().optional(),
+  id: z.string(),
+  diagnosticCode: z.string(),
+  safety: z.string(),
+  summary: z.string(),
+  appliesEdits: z.boolean(),
 });
 
 export const ZeroFixResultSchema = z.object({
@@ -167,10 +168,11 @@ export function parseFixOutput(raw: string): ZeroFixResult {
   const json = JSON.parse(raw);
   const fixes: ZeroFixSuggestion[] = (json.fixes ?? []).map(
     (f: Record<string, unknown>) => ({
-      code: String(f.code ?? ""),
-      line: Number(f.line ?? 0) || 0,
-      message: String(f.message ?? ""),
-      suggestion: f.suggestion ? String(f.suggestion) : undefined,
+      id: String(f.id ?? ""),
+      diagnosticCode: String(f.diagnosticCode ?? f.code ?? ""),
+      safety: String(f.safety ?? "requires-human-review"),
+      summary: String(f.summary ?? f.message ?? ""),
+      appliesEdits: Boolean(f.appliesEdits ?? false),
     }),
   );
   return {

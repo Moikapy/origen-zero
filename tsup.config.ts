@@ -7,6 +7,7 @@ export default defineConfig({
     compiler: "src/compiler.ts",
     "http-compiler": "src/http-compiler.ts",
     "wasm-tool": "src/wasm-tool.ts",
+    "wasi-runtime": "src/wasi-runtime.ts",
   },
   format: ["esm"],
   target: "es2022",

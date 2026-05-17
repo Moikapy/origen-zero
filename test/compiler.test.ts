@@ -134,13 +134,13 @@ describe("ZeroCompiler", () => {
       mockSuccess(JSON.stringify({
         ok: true,
         fixes: [
-          { code: "TYP001", line: 5, message: "Add type annotation", suggestion: "x: i32" },
+          { id: "repair-type", diagnosticCode: "TYP001", safety: "safe", summary: "Add type annotation", appliesEdits: true },
         ],
       }));
       const result = await compiler.fix({ path: "broken.0", content: "fun broken()" });
       expect(result.ok).toBe(true);
       expect(result.fixes).toHaveLength(1);
-      expect(result.fixes[0]!.suggestion).toBe("x: i32");
+      expect(result.fixes[0]!.id).toBe("repair-type");
     });
   });
 

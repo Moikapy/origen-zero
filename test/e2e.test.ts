@@ -183,6 +183,46 @@ describe.skipIf(!hasZero)("E2E: Zero CLI from source", () => {
     });
   });
 
+  // ── WASI runtime (args, env, fs) ───────────────────────────────────
+
+  describe("WASI runtime", () => {
+    it("passes args to std.args WASM (wasm32-wasi)", async () => {
+      const wasmPath = join(FIXTURES, "std-args.wasm");
+      if (!existsSync(wasmPath)) return; // skip if not built
+
+      const { createZeroWASIRuntime } = await import("../src/wasi-runtime.js");
+      const wasmBytes = readFileSync(wasmPath);
+      const ab = wasmBytes.buffer.slice(wasmBytes.byteOffset, wasmBytes.byteOffset + wasmBytes.byteLength) as ArrayBuffer;
+
+      const runtime = createZeroWASIRuntime({ args: ["zero", "agent-arg", "extra"] });
+      const mod = await WebAssembly.compile(ab);
+      const instance = await WebAssembly.instantiate(mod, runtime.imports);
+      runtime.setInstance(instance as any);
+
+      const exitCode = (instance.exports as any).main();
+      expect(exitCode).toBe(0);
+      expect(runtime.getStdout()).toContain("agent-arg");
+    });
+
+    it("passes env to std.env WASM (wasm32-web)", async () => {
+      const wasmPath = join(FIXTURES, "std-env.wasm");
+      if (!existsSync(wasmPath)) return; // skip if not built
+
+      const { createZeroWASIRuntime } = await import("../src/wasi-runtime.js");
+      const wasmBytes = readFileSync(wasmPath);
+      const ab = wasmBytes.buffer.slice(wasmBytes.byteOffset, wasmBytes.byteOffset + wasmBytes.byteLength) as ArrayBuffer;
+
+      const runtime = createZeroWASIRuntime({ env: ["ZERO_CONFORMANCE_ENV=agent-env", "OTHER=value"] });
+      const mod = await WebAssembly.compile(ab);
+      const instance = await WebAssembly.instantiate(mod, runtime.imports);
+      runtime.setInstance(instance as any);
+
+      const exitCode = (instance.exports as any).main();
+      expect(exitCode).toBe(0);
+      expect(runtime.getStdout()).toContain("env ok");
+    });
+  });
+
   // ── Compiler tools (Origen integration) ────────────────────────────
 
   describe("compiler tools for Origen", () => {

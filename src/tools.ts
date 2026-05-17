@@ -38,15 +38,16 @@ export function createZeroTool(config: ZeroToolConfig): OrigenTool {
   return {
     name: config.functionName,
     description: config.description,
-    parameters: {
+    parameters: config.parameters ?? {
       type: "object",
       properties: {},
       required: [],
     },
+    inputSchema: config.inputSchema,
     async execute(args: Record<string, unknown>): Promise<string> {
       return executeTool(config.execution, args);
     },
-  };
+  } as OrigenTool;
 }
 
 // ── createZeroToolsFromProgram ──────────────────────────────────────────
@@ -202,7 +203,7 @@ async function executeBinary(
         if (error) {
           reject(
             new ZeroExecutionError(
-              (error as NodeJS.ErrnoException & { status?: number }).status ?? 1,
+              ((error as any).code as number) ?? 1,
               stderr || error.message,
             ),
           );
