@@ -1,0 +1,8 @@
+# Multi-function Zero source for graph/size tests
+pub fun add(a: i32, b: i32) -> i32 => a + b
+
+pub fun multiply(a: i32, b: i32) -> i32 => a * b
+
+pub fun main(world: World) -> Void raises {
+  check world.out.write("result\n")
+}

@@ -1,0 +1,48 @@
+{
+  "name": "@moikapy/origen-zero",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Bridge package connecting Origen agents to ZeroLang compiler and runtime",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./tools": {
+      "types": "./dist/tools.d.ts",
+      "import": "./dist/tools.js",
+      "default": "./dist/tools.js"
+    },
+    "./compiler": {
+      "types": "./dist/compiler.d.ts",
+      "import": "./dist/compiler.js",
+      "default": "./dist/compiler.js"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsup --no-dts --no-sourcemap",
+    "build:release": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run build:release"
+  },
+  "peerDependencies": {
+    "@moikapy/origen": "^0.6.0"
+  },
+  "dependencies": {
+    "zod": "^4.4.2"
+  },
+  "devDependencies": {
+    "@moikapy/origen": "^0.6.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5",
+    "vitest": "^3"
+  }
+}

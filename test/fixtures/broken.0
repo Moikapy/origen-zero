@@ -1,0 +1,4 @@
+# Invalid Zero source — missing type annotation, undeclared variable
+fun broken() {
+  x = y + 1
+}
