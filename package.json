@@ -49,13 +49,13 @@
     "prepublishOnly": "bun run build:release"
   },
   "peerDependencies": {
-    "@moikapy/origen": "^0.6.0"
+    "@moikapy/origen": "^0.7.0"
   },
   "dependencies": {
     "zod": "^4.4.2"
   },
   "devDependencies": {
-    "@moikapy/origen": "^0.6.0",
+    "@moikapy/origen": "^0.7.2",
     "tsup": "^8.5.1",
     "typescript": "^5",
     "vitest": "^3"

@@ -76,3 +76,7 @@ export {
 
 // Interactive compiler tools
 export { createZeroCompilerTools } from "./compiler-tools.js";
+
+// Artifact-aware tool creation
+export { getOrCreateTool } from "./artifact-tool.js";
+export type { GetOrCreateToolOptions } from "./artifact-tool.js";
