@@ -1,6 +1,6 @@
 {
   "name": "@moikapy/origen-zero",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Bridge package connecting Origen agents to ZeroLang compiler and runtime",
   "license": "MIT",
