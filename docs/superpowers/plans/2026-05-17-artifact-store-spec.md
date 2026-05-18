@@ -3,7 +3,7 @@
 > **Status:** Draft  
 > **Author:** Shalom 🐉  
 > **Date:** 2026-05-17  
-> **Repos:** `@moikapy/origen`, `nimbus-mono`, `@moikapy/origen-zero`
+> **Repos:** `@moikapy/origen` (interface + backends), `origen-chat/nimbus-mono` (consumer)
 
 ---
 
@@ -333,27 +333,29 @@ const key = `zero/${name}-${hex(hash).slice(0, 8)}`;
 
 ## 9. Implementation Plan
 
-### Phase 1: Interface + KV Backend (`@moikapy/origen`)
+### Phase 1: Interface + D1 Backend (`@moikapy/origen`)
 1. Add `ArtifactStore` interface to `@moikapy/origen/src/types.ts`
-2. Add `artifactStore` to `AgentConfig`
-3. Add `getArtifacts` to `OrigenTool.execute` signature (backward-compat)
-4. Add `KVArtifactStore` to `@moikapy/origen` or a shared package
+2. Add `D1ArtifactStore` implementation (D1 metadata + optional KV for blobs)
+3. Add `artifactStore` to `AgentConfig`
+4. Add `getArtifacts` to `OrigenTool.execute` signature (backward-compat)
+5. Add D1 migration for `artifacts` table
 
 ### Phase 2: Origen-Zero Integration (`@moikapy/origen-zero`)
 1. Update `createZeroWASMTool` to accept an optional `artifactStore`
 2. Update `compileAndRegister` to cache compiled WASM artifacts
 3. Add `getOrCreateTool` helper for the compile-once-use-forever pattern
 
-### Phase 3: Nimbus Integration (`nimbus-mono`)
-1. Create `KVArtifactStore` in the app layer
-2. Wire `artifactStore` through to the agent config
+### Phase 3: Origen-Chat Integration (`origen-chat/nimbus-mono`)
+1. Wire `D1ArtifactStore(env.DB)` through to the agent config in the chat app
+2. Wire `KVArtifactStore(env.ARTIFACTS_KV)` for binary blob storage
 3. Update wrangler.toml with `ARTIFACTS_KV` binding
+4. Create origen-zero plugin adapters (Section 5 in tool spec)
 
 ### Phase 4: Agent Self-Modification Loop
 1. Agent writes Zero code → zero_check validates
 2. zero_fix repairs errors → zero_build compiles to WASM
-3. WASM is cached in KV → tool registered for session
-4. Next session: artifact loaded from KV → no recompilation needed
+3. WASM is cached in D1/KV → tool registered for session
+4. Next session: artifact loaded from D1/KV → no recompilation needed
 
 ## 10. What This Is NOT
 
@@ -365,12 +367,12 @@ const key = `zero/${name}-${hex(hash).slice(0, 8)}`;
 ## 11. Dependencies
 
 ```
-@moikapy/origen         — ArtifactStore interface, AgentConfig.artifactStore
-@moikapy/origen-zero    — WASM artifact caching, getOrCreateTool helper
-nimbus-mono/app          — KVArtifactStore wiring, env binding
+@moikapy/origen           — ArtifactStore interface, D1ArtifactStore, AgentConfig.artifactStore
+@moikapy/origen-zero      — getOrCreateTool helper (uses ArtifactStore from origen)
+origen-chat/nimbus-mono    — Wire D1ArtifactStore + KVArtifactStore, plugin adapters
 ```
 
-No new npm packages needed. The interface lives in Origen, backends live in the app.
+No new npm packages needed. The interface and backends live in `@moikapy/origen`. The chat app wires them up.
 
 ---
 
